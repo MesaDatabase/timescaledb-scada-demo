@@ -1,21 +1,35 @@
--- Script: 06_timescale_bgw_job_status.sql
--- Purpose: Timescale background jobs (retention/compression/etc) + recent errors
--- Safe in prod: YES (read-only)
--- Requires: timescaledb extension (timescaledb_information.* views)
+-- ============================================================================
+-- Script:        06_bgw_job_stats.sql
+-- Folder:        01_monitoring
+-- Purpose:       TimescaleDB background jobs (compression, retention,
+--                continuous aggregate refresh, custom jobs) with run history,
+--                plus the most recent job errors.
+-- Safe in prod:  YES (read-only)
+-- Requires:      TimescaleDB (timescaledb_information.jobs / job_stats /
+--                job_errors). job_errors requires TimescaleDB 2.5+.
+-- Compatibility: TimescaleDB 2.x
+-- Notes:         total_failures > 0 with a recent last_successful_finish is
+--                usually transient; failures with no recent success mean the
+--                policy is silently not doing its work -- compression and
+--                retention backlogs build up fast.
+-- ============================================================================
 
--- Job status (all jobs)
+-- Query 1: all jobs with status and run statistics
 SELECT
   now() AS as_of,
   j.job_id,
   j.application_name,
   j.proc_schema,
   j.proc_name,
+  j.hypertable_schema,
+  j.hypertable_name,
   j.schedule_interval,
   j.max_runtime,
   j.retry_period,
   j.owner,
   j.scheduled,
   j.fixed_schedule,
+  j.config,
   js.job_status,
   js.last_run_started_at,
   js.last_successful_finish,
@@ -32,7 +46,7 @@ ORDER BY
   js.last_run_started_at DESC NULLS LAST,
   j.job_id;
 
--- Recent job errors (last 50)
+-- Query 2: most recent job errors (last 50)
 SELECT
   now() AS as_of,
   e.job_id,

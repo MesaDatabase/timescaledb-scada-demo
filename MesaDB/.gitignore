@@ -1,0 +1,14 @@
+# local environment overrides
+.env
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# editor noise
+.vscode/
+.idea/
+
+# logs and scratch
+*.log
+scratch/

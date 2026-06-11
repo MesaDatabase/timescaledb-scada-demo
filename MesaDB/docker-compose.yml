@@ -1,0 +1,44 @@
+# =============================================================================
+# docker-compose.yml -- the demo's entire infrastructure, declared.
+#
+# One service: a TimescaleDB server (PostgreSQL 16 + TimescaleDB, the "ha"
+# image also bundles psql and timescaledb-tune). Start it with:
+#
+#   docker compose up -d        # or just: ./demo.sh
+#
+# Nothing installs on your machine -- the database lives in a container and
+# its data in a named Docker volume. `docker compose down` stops it (data
+# kept); `docker compose down -v` deletes everything.
+# =============================================================================
+
+services:
+  db:
+    image: timescale/timescaledb-ha:pg16
+    container_name: scada-timescale-demo
+    environment:
+      POSTGRES_USER: scada
+      # Demo-only credentials. Override without editing this file:
+      #   SCADA_DB_PASSWORD=something docker compose up -d
+      POSTGRES_PASSWORD: ${SCADA_DB_PASSWORD:-scada_demo_pw}
+      POSTGRES_DB: scada_demo
+    ports:
+      # Host port 5439 (not 5432) so a PostgreSQL already running on your
+      # machine doesn't collide. Connect from outside the container with:
+      #   psql -h localhost -p 5439 -U scada -d scada_demo
+      - "5439:5432"
+    volumes:
+      # Database files persist here between restarts
+      - pgdata:/home/postgres/pgdata/data
+      # The repo itself, mounted read-only at /repo so psql INSIDE the
+      # container can run every script by path -- no client tools needed
+      # on the host.
+      - ./:/repo:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scada -d scada_demo"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+    restart: unless-stopped
+
+volumes:
+  pgdata:

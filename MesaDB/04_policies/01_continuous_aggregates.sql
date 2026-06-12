@@ -117,6 +117,6 @@ SELECT add_compression_policy('scada.readings_1h', INTERVAL '14 days', if_not_ex
 \echo 'Continuous aggregates ready. Real-time check (includes raw rows newer'
 \echo 'than the materialization -- run it, insert a reading, run it again):'
 \echo '  SELECT * FROM scada.readings_1h WHERE bucket > now() - INTERVAL ''3 hours'' LIMIT 12;'
-SELECT view_name, materialized_only, finalized
+SELECT view_name, materialized_only, compression_enabled
 FROM timescaledb_information.continuous_aggregates
 WHERE view_schema = 'scada';

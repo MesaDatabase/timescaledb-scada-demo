@@ -35,7 +35,7 @@ CREATE TEMP TABLE tmp_pgss_top
   cache_hit_pct        numeric,
   temp_blks_written    bigint,
   query                text
-) ON COMMIT DROP;
+);
 
 DO $$
 DECLARE

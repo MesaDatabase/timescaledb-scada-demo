@@ -48,7 +48,8 @@ BEGIN
 
     -- Equipment classes (reference table, not enum: adding one is an INSERT)
     INSERT INTO device_types (name) VALUES
-        ('plant_controller'), ('inverter'), ('battery'), ('meter'), ('weather_station');
+        ('plant_controller'), ('inverter'), ('battery'), ('meter'), ('weather_station')
+    ON CONFLICT (name) DO NOTHING;
     SELECT device_type_id INTO _t_controller FROM device_types WHERE name = 'plant_controller';
     SELECT device_type_id INTO _t_inverter   FROM device_types WHERE name = 'inverter';
     SELECT device_type_id INTO _t_battery    FROM device_types WHERE name = 'battery';

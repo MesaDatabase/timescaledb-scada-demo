@@ -100,7 +100,7 @@ BEGIN
             PERFORM scada.submit_control_request(
                 _control_request_id := _cr_id, _function_code := 10,
                 _value := ARRAY[_setpoint],
-                _status := CASE WHEN _roll < 0.03 THEN 'rejected' ELSE 'accepted' END,
+                _status := (CASE WHEN _roll < 0.03 THEN 'rejected' ELSE 'accepted' END)::control_status,
                 _source := 'dispatch', _site_id := _site.site_id,
                 _created_by := _system, _updated_by := _system,
                 _created_at := _ts, _updated_at := _ts + INTERVAL '5 seconds',
@@ -121,7 +121,7 @@ BEGIN
                 PERFORM scada.submit_control_request(
                     _control_request_id := _cr_id, _function_code := 10,
                     _value := ARRAY[_setpoint],
-                    _status := CASE WHEN _roll < 0.07 THEN 'failed' ELSE 'completed' END,
+                    _status := (CASE WHEN _roll < 0.07 THEN 'failed' ELSE 'completed' END)::control_status,
                     _source := 'dispatch', _site_id := _site.site_id,
                     _created_by := _system, _updated_by := _system,
                     _created_at := _ts, _updated_at := _ts + INTERVAL '30 minutes',

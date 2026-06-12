@@ -1,0 +1,60 @@
+-- ============================================================================
+-- Script:        demo_blocking_locks.sql
+-- Folder:        05_performance
+-- Purpose:       Reproducible two-session demo of a row-level blocking lock.
+--                Run alongside 01_monitoring/02_blocking_locks.sql to watch
+--                detection in real time.
+-- Safe in prod:  NO -- demo only. Creates/drops a table and holds an open
+--                transaction. Run on a dev/demo database.
+-- Requires:      Two psql sessions (terminal windows) on the same database.
+-- Compatibility: PostgreSQL 12+
+-- ============================================================================
+
+-- ---------------------------------------------------------------------------
+-- SESSION 1 (terminal 1): become the blocker
+-- ---------------------------------------------------------------------------
+-- DROP TABLE IF EXISTS public.demo_lock;
+-- CREATE TABLE public.demo_lock (
+--   id int PRIMARY KEY,
+--   v  int NOT NULL
+-- );
+--
+-- INSERT INTO public.demo_lock(id, v) VALUES (1, 0);
+--
+-- BEGIN;
+--
+-- UPDATE public.demo_lock
+-- SET v = v + 1
+-- WHERE id = 1;
+--
+-- SELECT pg_backend_pid() AS blocker_pid;
+--
+-- -- Leave this transaction OPEN. Do NOT commit yet.
+
+-- ---------------------------------------------------------------------------
+-- SESSION 2 (terminal 2): become the blocked session
+-- ---------------------------------------------------------------------------
+-- SELECT pg_backend_pid() AS blocked_pid;  -- note this BEFORE blocking
+--
+-- BEGIN;
+--
+-- -- This statement will HANG: session 1 holds the row lock on id = 1.
+-- UPDATE public.demo_lock SET v = v + 1 WHERE id = 1;
+
+-- ---------------------------------------------------------------------------
+-- SESSION 3 (optional, terminal 3): observe
+-- ---------------------------------------------------------------------------
+-- Run 01_monitoring/02_blocking_locks.sql. You should see one blocked ->
+-- blocking pair, with the UPDATE statements on both sides and the blocker's
+-- transaction age growing -- the classic "idle in transaction" footprint.
+
+-- ---------------------------------------------------------------------------
+-- RESOLUTION + CLEANUP
+-- ---------------------------------------------------------------------------
+-- Either COMMIT/ROLLBACK in session 1 (session 2 immediately unblocks), or
+-- demonstrate forced remediation from session 3:
+--   SELECT pg_terminate_backend(<blocker_pid>);
+--
+-- Then clean up:
+-- ROLLBACK;  -- in any session still in a transaction
+-- DROP TABLE IF EXISTS public.demo_lock;

@@ -7,6 +7,7 @@
 #   .\demo.ps1 psql       # interactive psql shell inside the container
 #   .\demo.ps1 status     # policy/job/compression health check
 #   .\demo.ps1 monitor    # run the 01_monitoring diagnostic suite
+#   .\demo.ps1 bench      # run the 05_performance benchmark/EXPLAIN suite
 #   .\demo.ps1 down       # stop the container (data volume kept)
 #   .\demo.ps1 clean      # stop AND delete all data -- full reset
 #
@@ -35,7 +36,14 @@ $Scripts = @(
   "04_policies/01_continuous_aggregates.sql",
   "04_policies/02_retention.sql",
   "04_policies/03_policy_status.sql",
+  "06_operations/00_roles_and_grants.sql",       # NOLOGIN group roles, idempotent
   "03_data_generation/04_showcase_queries.sql"   # the grand finale
+)
+
+$Perf = @(
+  "05_performance/00_benchmark_compression.sql",
+  "05_performance/01_explain_walkthrough.sql",
+  "05_performance/02_cagg_vs_raw_benchmark.sql"
 )
 
 $Monitoring = @(
@@ -89,6 +97,7 @@ switch ($Command) {
     "psql"    { docker compose exec db psql -U scada -d scada_demo }
     "status"  { Invoke-Sql "04_policies/03_policy_status.sql" }
     "monitor" { foreach ($f in $Monitoring) { Invoke-Sql $f } }
+    "bench"   { foreach ($f in $Perf) { Invoke-Sql $f } }
     "down"    { Banner "Stopping (data kept)..."; docker compose down }
     "clean"   { Banner "Stopping and DELETING all data..."; docker compose down -v }
     default   { Get-Content $PSCommandPath | Select-String '^#   \.\\demo' | ForEach-Object { $_.Line.TrimStart('# ') } }

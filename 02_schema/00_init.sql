@@ -18,6 +18,13 @@
 
 CREATE EXTENSION IF NOT EXISTS timescaledb;
 
+-- Query-performance telemetry for the monitoring suite (01_monitoring/03).
+-- Requires 'pg_stat_statements' in shared_preload_libraries -- docker-compose.yml
+-- sets that at server start. If you run this against a server without it
+-- preloaded, this CREATE EXTENSION fails with "pg_stat_statements must be
+-- loaded via shared_preload_libraries"; add it there and restart.
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+
 -- All application objects live in a dedicated schema rather than public:
 -- cleaner grants, cleaner pg_dump, no collisions with extension objects.
 CREATE SCHEMA IF NOT EXISTS scada;

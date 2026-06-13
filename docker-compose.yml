@@ -21,6 +21,16 @@ services:
       #   SCADA_DB_PASSWORD=something docker compose up -d
       POSTGRES_PASSWORD: ${SCADA_DB_PASSWORD:-scada_demo_pw}
       POSTGRES_DB: scada_demo
+    # shared_preload_libraries must be set at server start -- it cannot be
+    # turned on later with CREATE EXTENSION. The image ships it set to
+    # 'timescaledb'; we override on the command line (highest precedence, beats
+    # the value timescaledb-tune writes into postgresql.conf) so the monitoring
+    # suite's pg_stat_statements query (01_monitoring/03) has data to read.
+    # The matching CREATE EXTENSION lives in 02_schema/00_init.sql.
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=timescaledb,pg_stat_statements
     ports:
       # Host port 5439 (not 5432) so a PostgreSQL already running on your
       # machine doesn't collide. Connect from outside the container with:
